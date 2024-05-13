@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rocket Projectile Simulator</title>
+<link rel="stylesheet" href="style.css">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js" integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous"></script>
+
+<style>
+    body {
+    font-family: Arial, sans-serif;
+    background-image: url('wp2293438.png');
+    background-size: cover;
+    background-repeat: no-repeat;
+    margin: 0;
+    padding: 0px;
+ }
+
+h1 {
+    text-align: center;
+}
+
+.container {
+    margin-bottom: 30px;
+    margin-top: 5px;
+}
+
+.container > div {
+    margin-left: 5px;
+}
+
+label {
+    font-weight: bold;
+    color: #f5f5f5;
+    margin-left: 5px;
+}
+
+input[type="number"] {
+    width: 100px;
+    padding: 10px;
+    border: 1px solid #b8b6b6;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    margin-top: 10px;
+    margin-left: 5px;
+}
+
+button {
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: rgb(7, 7, 7);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: 5px;
+}
+
+button:hover {
+    background-color: #c5ebc6;
+}
+
+#results {
+    margin-bottom: 20px;
+}
+
+canvas {
+    border: 2px solid #f5f5f5;
+    color: #c5ebc6;
+    display: block;
+    margin: 0 auto; /* Centering the canvas */
+}
+
+
+.footer {
+    font-family: Arial, Helvetica, sans-serif;
+    color: #f5f5f5;
+    text-align: center;
+    align-items: baseline;
+    padding-top: 10px;
+}
+
+</style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+          <a class="navbar-brand" href="#">Rockect Projectile Simulator</a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDarkDropdown" aria-controls="navbarNavDarkDropdown" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarNavDarkDropdown">
+            <ul class="navbar-nav">
+              <li class="nav-item dropdown">
+                <button class="btn btn-dark dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                  Menu
+                </button>
+                <ul class="dropdown-menu dropdown-menu-dark">
+                  <li><a class="dropdown-item" href="TWR.html">Thrust-to-Weight ratio</a></li>
+                  <li><a class="dropdown-item" href="RM.html">Rocket Motors</a></li>
+                  <li><a class="dropdown-item" href="resource.html">Resources</a></li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+        </div>
+    </nav>
+
+    <div class="label">
+        <div>
+            <label for="rocketWeight">Rocket Body Weight (kg):</label>
+            <input type="number" id="rocketWeight" step="0.01">
+        </div>
+        <div>
+            <label for="fuelWeight">Fuel Weight (kg):</label>
+            <input type="number" id="fuelWeight" step="0.01" >
+        </div>
+        <div>
+            <label for="burnTime">Burn Time (s):</label>
+            <input type="number" id="burnTime" step="0.1" >
+        </div>
+        <div>
+            <label for="rocketRadius">Rocket Radius (m):</label>
+            <input type="number" id="rocketRadius" step="0.01" >
+        </div>
+        <div>
+            <label for="rocketHeight">Rocket Height (m):</label>
+            <input type="number" id="rocketHeight" step="0.01" >
+        </div>
+        <div>
+            <label for="maxThrust">Max Thrust (N):</label> 
+            <input type="number" id="maxThrust" step="0.1">
+        </div>
+        <button onclick="simulateAndPlot()">Simulate</button>
+    </div>
+    <div id="results">
+        <!-- Graphs will be displayed here -->
+    </div>
+    <div id="projectileHeight"></div>
+    <div id="force"></div>
+    
+    <script>
+
+function simulateAndPlot() {
+    var rocketWeight = parseFloat(document.getElementById('rocketWeight').value);
+    var fuelWeight = parseFloat(document.getElementById('fuelWeight').value);
+    var burnTime = parseFloat(document.getElementById('burnTime').value);
+    var rocketRadius = parseFloat(document.getElementById('rocketRadius').value);
+    var rocketHeight = parseFloat(document.getElementById('rocketHeight').value);
+    var maxThrust = parseFloat(document.getElementById('maxThrust').value);
+
+    var GRAVITY = 9.8; // m/s^2, acceleration due to gravity
+    var initialMass = rocketWeight + fuelWeight;
+    var fuelMass = fuelWeight;
+    var timeStep = 0.01; // s, time step for simulation
+    var totalTime = 10; // s, total time for the simulation
+
+    var time = 0;
+    var velocity = [0, 0, 0]; // Initial velocity vector
+    var altitude = 0;
+    var maxAltitude = 0;
+    var apogeeTime = 0;
+    var apogeeAltitude = 0;
+    var maxVelocity = 0;
+    var altitudes = [altitude];
+    var velocities = [Math.sqrt(velocity[0]**2 + velocity[1]**2 + velocity[2]**2)];
+    var thrusts = [0];
+    var times = [time];
+
+    var remainingFuelMass = fuelMass;
+
+    while (time < totalTime) {
+        var thrust = time <= burnTime && remainingFuelMass > 0 ? maxThrust * (1 - time / burnTime) : 0;
+        var fuelConsumptionRate = maxThrust / (burnTime * GRAVITY);
+        remainingFuelMass = Math.max(0, fuelMass - fuelConsumptionRate * time);
+        var mass = initialMass + remainingFuelMass;
+
+        var dragForce = calculateDragForce(velocity, rocketRadius, rocketHeight);
+        var totalForce = thrust - (dragForce[2] + mass * GRAVITY);
+        var acceleration = totalForce / mass;
+
+        for (var i = 0; i < velocity.length; i++) {
+            velocity[i] += acceleration * timeStep;
+        }
+
+        altitude += velocity[2] * timeStep;
+        thrusts.push(thrust);
+        time += timeStep;
+        altitudes.push(altitude);
+        velocities.push(Math.sqrt(velocity[0]**2 + velocity[1]**2 + velocity[2]**2));
+        times.push(time);
+
+        if (altitude > maxAltitude) {
+            maxAltitude = altitude;
+            apogeeTime = time;
+            apogeeAltitude = altitude;
+        }
+
+        if (Math.sqrt(velocity[0]**2 + velocity[1]**2 + velocity[2]**2) > maxVelocity) {
+            maxVelocity = Math.sqrt(velocity[0]**2 + velocity[1]**2 + velocity[2]**2);
+        }
+    }
+
+    var thrustWeightRatios = thrusts.map(function (thrust) {
+        return thrust / (mass * GRAVITY);
+    });
+
+    var results = {
+        times: times,
+        altitudes: altitudes,
+        velocities: velocities,
+        thrustWeightRatios: thrustWeightRatios,
+        thrusts: thrusts, // Store thrusts for later calculation
+        maxAltitude: maxAltitude,
+        apogeeTime: apogeeTime,
+        apogeeAltitude: apogeeAltitude,
+        maxVelocity: maxVelocity
+    };
+
+    // Calculate projectile height and force
+    var projectileHeight = results.maxAltitude;
+    var force = results.thrusts[results.thrusts.length - 1]; // Assuming the last recorded thrust is the force
+
+    // Display results on the webpage
+    var resultsDiv = document.getElementById('results');
+    resultsDiv.innerHTML = "<p>Projectile Height: " + projectileHeight.toFixed(2) + " meters</p><p>Force: " + force.toFixed(2) + " Newtons</p>";
+
+    plotGraphs(results);
+}
+
+    
+
+    
+    function calculateDragForce(velocity, rocketRadius, rocketHeight) {
+        var rocketArea = calculateRocketAreaFromDimensions(rocketRadius, rocketHeight);
+        var velocityMagnitude = Math.sqrt(velocity[0]**2 + velocity[1]**2 + velocity[2]**2);
+    
+        var dragForceMagnitude = 0.5 * 0.3 * rocketArea * velocityMagnitude ** 2;
+        var dragForce = [0, 0, -dragForceMagnitude];
+        return dragForce;
+    }
+    
+    function calculateRocketAreaFromDimensions(radius, height) {
+        return Math.PI * 2 * radius * (radius + height);
+    }
+    
+    function plotGraphs(results) {
+    var altitudeCanvas = document.createElement('canvas');
+    altitudeCanvas.width = 800;
+    altitudeCanvas.height = 400;
+    document.getElementById('results').innerHTML = '';
+    document.getElementById('results').appendChild(altitudeCanvas);
+
+    var velocityCanvas = document.createElement('canvas');
+    velocityCanvas.width = 800;
+    velocityCanvas.height = 400;
+    document.getElementById('results').appendChild(velocityCanvas);
+
+    var thrustWeightRatioCanvas = document.createElement('canvas');
+    thrustWeightRatioCanvas.width = 800;
+    thrustWeightRatioCanvas.height = 400;
+    document.getElementById('results').appendChild(thrustWeightRatioCanvas);
+
+    var ctxAltitude = altitudeCanvas.getContext('2d');
+    var ctxVelocity = velocityCanvas.getContext('2d');
+    var ctxThrustWeightRatio = thrustWeightRatioCanvas.getContext('2d');
+
+    var timeValues = results.times;
+
+
+    var altitudeChart = new Chart(ctxAltitude, {
+        type: 'line',
+        data: {
+            labels: timeValues,
+            datasets: [{
+                label: 'Altitude (m)',
+                data: results.altitudes,
+                borderColor: 'blue',
+                pointBackgroundColor: 'white',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Time (s)',
+                        color: 'white'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Altitude (m)',
+                        color: 'white'
+                    }
+                }
+            }
+        }
+    });
+
+    var velocityChart = new Chart(ctxVelocity, {
+        type: 'line',
+        data: {
+            labels: timeValues,
+            datasets: [{
+                label: 'Velocity (m/s)',
+                data: results.velocities,
+                borderColor: 'red',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Time (s)',
+                        color: 'white'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Velocity (m/s)',
+                        color: 'white'
+                    }
+                }
+            }
+        }
+    });
+
+    var thrustWeightRatioChart = new Chart(ctxThrustWeightRatio, {
+        type: 'line',
+        data: {
+            labels: timeValues,
+            datasets: [{
+                label: 'Thrust-to-Weight Ratio',
+                data: results.thrustWeightRatios,
+                borderColor: 'green',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Time (s)',
+                        color: 'white'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Thrust-to-Weight Ratio',
+                        color: 'white'
+                    }
+                }
+            }
+        }
+    });
+   }
+
+ </script>
+ 
+<footer>
+    <div class="footer">
+      <p>&copy; 2024 AMS Rocketry </p>
+      <p><b>"Rocket science is tough, and rockets have a way of failing."</b></p>
+    </div>  
+  </footer> 
+</body>
+</html>
