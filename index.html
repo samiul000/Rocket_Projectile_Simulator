@@ -71,7 +71,7 @@ canvas {
     border: 2px solid #f5f5f5;
     color: #c5ebc6;
     display: block;
-    margin: 0 auto; /* Centering the canvas */
+    margin: 0 auto; 
 }
 
 
@@ -138,7 +138,7 @@ canvas {
         <button onclick="simulateAndPlot()">Simulate</button>
     </div>
     <div id="results">
-        <!-- Graphs will be displayed here -->
+       
     </div>
     <div id="projectileHeight"></div>
     <div id="force"></div>
@@ -153,14 +153,14 @@ function simulateAndPlot() {
     var rocketHeight = parseFloat(document.getElementById('rocketHeight').value);
     var maxThrust = parseFloat(document.getElementById('maxThrust').value);
 
-    var GRAVITY = 9.8; // m/s^2, acceleration due to gravity
+    var GRAVITY = 9.8; 
     var initialMass = rocketWeight + fuelWeight;
     var fuelMass = fuelWeight;
     var timeStep = 0.01; // s, time step for simulation
     var totalTime = 10; // s, total time for the simulation
 
     var time = 0;
-    var velocity = [0, 0, 0]; // Initial velocity vector
+    var velocity = [0, 0, 0];
     var altitude = 0;
     var maxAltitude = 0;
     var apogeeTime = 0;
@@ -214,7 +214,7 @@ function simulateAndPlot() {
         altitudes: altitudes,
         velocities: velocities,
         thrustWeightRatios: thrustWeightRatios,
-        thrusts: thrusts, // Store thrusts for later calculation
+        thrusts: thrusts, 
         maxAltitude: maxAltitude,
         apogeeTime: apogeeTime,
         apogeeAltitude: apogeeAltitude,
@@ -223,7 +223,7 @@ function simulateAndPlot() {
 
     // Calculate projectile height and force
     var projectileHeight = results.maxAltitude;
-    var force = results.thrusts[results.thrusts.length - 1]; // Assuming the last recorded thrust is the force
+    var force = results.thrusts[results.thrusts.length - 1]; 
 
     // Display results on the webpage
     var resultsDiv = document.getElementById('results');
